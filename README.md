@@ -101,6 +101,8 @@ Explorer: 1.0.0
 
 ## Current Approach Benefits
 
+These are worth preserving:
+
 Automated release process
 
 Conventional commit based
@@ -109,7 +111,7 @@ Changelog generation included
 
 Separate workflows for main and release branches
 
-## What Changed?
+## New Release Strategy
 
 Version strings are now synced across:
 
