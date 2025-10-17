@@ -1,8 +1,13 @@
+---
+marp: true
+---
+
 <!--
 theme: gaia
 class:
+ - lead
  - invert
-headingDivider: 2 
+headingDivider: 2
 paginate: true
 -->
 
@@ -12,118 +17,220 @@ _class:
  - invert
 -->
 
-# Deploy Marp to GitHub Pages
+# Release Strategy
 
-Presentations to Webpages: Instantly!
+Unified versioning and release management
 
-## What?
+## Current Release Strategy
 
-[Marp](https://marp.app/) lets you create HTML slides from markdown (like this!).
+Uses release-please for automated releases
 
-This presentation is both a [website](https://alexsci.com/marp-to-pages) and a [README.md](https://github.com/ralexander-phi/marp-to-pages/blob/main/README.md).
+Triggered on every push to main
 
-## Why?
+Creates release PRs automatically
 
-Treat your presentation the same way you treat code.
+## Current Versioning
 
-- Use git to track changes
-- Pull requests to collaborate
-- Deploy automatically
-- See a problem? Open an issue!
+Version managed in package.json
 
-## Setup
+Controls, firmware, and explorer have independent versions
 
-Want to create your own?
+Main branch releases use `-beta` suffix
 
-First, create a new repo [from the template repo](https://github.com/ralexander-phi/marp-to-pages).
+Example: `1.25.0-beta`
 
-![](img/use-template.png)
+## Current Release Process
 
-## Configure GitHub Pages
+1. Developers merge PRs to main
+2. release-please analyzes commits
+3. Opens/updates a release PR
+4. Merge release PR to create release
+5. Release creation triggers branch workflow
+6. Creates `release/X.Y.x` branch
 
-Open your new repo and [setup publishing](https://help.github.com/en/github/working-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#choosing-a-publishing-source).
+## Current Branch Creation
 
-You'll typically use `gh-pages` as the deploy branch.
+When a prerelease is published:
 
-## Review Build
+- Extracts major.minor from version
+- Creates branch `release/X.Y.x`
+- Commits with `Release-As: X.Y.0`
+- Bumps to stable version on branch
 
-Click on Actions tab and see if the build succeeded (it may take some time).
+## Current Changelog
 
-![](img/click-actions.png)
+Automatically generated from conventional commits
 
-You should now see the generated files in the `gh-pages` branch.
+Groups by commit type (feat, fix, etc.)
 
-## View webpage
+Links to commits and Pull Requests
 
-Open your deployed webpage to see the content.
+Updated with each release PR
 
-Out of the box you should see `README.md` as `/index.html` and `/README.pdf`. Slides under `docs/` are also converted.
+## Current Hotfix Workflow
 
-## Running locally
+Automated via release-please
 
-Locally you'll run commands like:
+Runs on push to release/** branches
 
+Always bumps patch version on release branches
+
+Creates release PRs on release branches
+
+## Current Release Branch Behavior
+
+Separate release-please configuration
+
+Uses always-bump-patch versioning
+
+No manual version control needed
+
+Relies on conventional commits
+
+## Considerations
+
+Independent versioning per workspace
+
+Package.json: 1.25.0-beta
+
+Controls: workspace shared version
+
+Firmware: 0.1.0
+
+Explorer: 1.0.0
+
+## Current Approach Benefits
+
+Automated release process
+
+Conventional commit based
+
+Changelog generation included
+
+Separate workflows for main and release branches
+
+## What Changed?
+
+Version strings are now synced across:
+
+- Package.json (repo root)
+- Controls workspace Cargo.toml
+- Firmware workspace Cargo.toml
+- Explorer workspace Cargo.toml
+- Cabinet-controller workspace Cargo.toml
+
+## Release Process
+
+1. Bump all version strings uniformly
+2. Update the changelog
+3. Commit changes
+4. Tag that commit (e.g., `v1.2.0`)
+5. Create release branch (e.g., `release/hyphenx-v1.2.x`)
+6. Publish release to GitHub
+
+## Hotfix Process
+
+To apply hotfixes to release branches:
+
+1. Cherry-pick the SHA of the commit
+2. Bump the patch version
+3. Publish release to GitHub
+
+## The makeline-release Tool
+
+Custom tool that handles releases reliably
+
+Just commands wrap each step for convenience
+
+## Bump Version
+
+```bash
+# Update version in all 5 places
+# And update CHANGELOG.md
+
+just bump-minor-version  # 1.25.0 → 1.26.0
+just bump-major-version  # 1.25.0 → 2.0.0
 ```
-$ marp README.md -o build/README.pdf
+
+## Create Release Branch
+
+```bash
+# Tag current commit on main
+# Create/switch to release branch
+
+just create-release-branch       # release/1.26.x
+
+# Or with a specific suffix
+just create-release-branch beta  # release/1.26.x-beta
 ```
 
-or
+## Publish Release
 
-```
-$ npx @marp-team/marp-cli@latest README.md -o build/README.pdf
-```
+```bash
+# Publish the release to GitHub
 
-## As a workflow step
-
-The workflow runs an equivalent step:
-
-```
-- name: Marp Build (README.pdf)
-  uses: docker://marpteam/marp-cli:v1.7.0
-  with:
-    args: README.md -o build/README.pdf
-  env:
-    MARP_USER: root:root
+just publish-release  # Creates hyphenx-v1.26.x
 ```
 
-Note the `args` match the previous slide.
+## Apply Hotfixes
 
-## Customizing the build
+```bash
+# Find commits to backport
+git log main --oneline
 
-Anything in the `build/` folder will be deployed to GitHub Pages.
+# Apply hotfix (bumps patch version)
+just hotfix <sha>
 
-You can copy extra files or run further processing steps using other tools.
+# Publish updated release
+just publish-release
+```
 
-## Learn more about Marp
+## Dry Run Mode
 
-This is a good time to learn more about Marp. Here's some resources:
+All commands support dry run:
 
-- [CommonMark](https://commonmark.org/)
-- [Cheat Sheet](https://commonmark.org/help/)
-- [Themes](https://github.com/marp-team/marp-core/tree/master/themes)
-- [CSS Themes](https://marpit.marp.app/theme-css)
-- [Directives](https://marpit.marp.app/directives)
-- [VS Code plugin](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode)
+```bash
+just bump-minor-version-dry
+just bump-major-version-dry
+just create-release-branch-dry
+just publish-release-dry
+```
 
-## Example Sites
+## Changelog Management
 
-Known sites using this action are:
+CHANGELOG.md is automatically updated during version bump
 
-- [University of Illinois at Urbana-Champaign's CS 199 Even More Practice](https://cs199emp.netlify.app/) [(code)](https://github.com/harsh183/emp-125)
-- [Exploring agent based models](https://roiarthurb.github.io/Talk-UMMISCO_06-07-2020/) [(code)](https://github.com/RoiArthurB/Talk-UMMISCO_06-07-2020)
+Uses git-cliff for changelog generation
 
-Send a [pull request](https://github.com/ralexander-phi/marp-to-pages) to get your site added.
+No manual changelog editing required
 
-## Publish your slides
+## CI Integration
 
-When you are ready to share your presentation, commit or merge to `main` and your content on GitHub Pages will automatically update.
+Publishing with `release/**` branch triggers:
 
-# 🎉
-<!--
-_class:
- - lead
- - invert
--->
-### Hooray!
+- Existing CI workflows
+- Artifact uploading
+- Greengrass component deployment
 
+Everything continues to work!
 
+## Benefits
+
+- Uniform semantic versioning
+- Tags on main branch commits
+- Release branches from tagged commits
+- Hotfix capability
+- Automated changelog management
+
+## Replaces release-please
+
+This entirely replaces the old release-please workflow
+
+## Why This Approach?
+
+- Unified version for software suite
+- Better control over release process
+- Simpler hotfix management
+- Clearer release history
+
+## Questions?
