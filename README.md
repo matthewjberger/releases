@@ -87,9 +87,9 @@ No manual version control needed
 
 Relies on conventional commits
 
-## Considerations
+## Current Challenges
 
-Independent versioning per workspace
+Independent versioning per workspace creates confusion
 
 Package.json: 1.25.0-beta
 
@@ -99,9 +99,11 @@ Firmware: 0.1.0
 
 Explorer: 1.0.0
 
-## Current Approach Benefits
+Difficult to track which components work together
 
-These are worth preserving:
+## Benefits Worth Preserving
+
+From current approach:
 
 Automated release process
 
@@ -264,13 +266,65 @@ Use explorer widget to validate
 
 Confirms binaries match the release
 
+## Firmware Artifacts
+
+Embedded firmware for lift/cabinet screens
+
+Built for RP2040 microcontroller
+
+Multiple artifacts generated:
+
+- firmware.hex, firmware.uf2
+- stage3.hex, stage3.uf2 (bootloader)
+- stage4.hex, stage4.uf2 (bootloader)
+- merged.hex (combined)
+
+## Firmware Upload to Release
+
+On release published:
+
+Build embedded firmware artifacts
+
+Upload to GitHub Actions artifacts
+
+Attach all .hex and .uf2 files to release
+
+Available for download with release
+
+## Greengrass Components
+
+Rust binaries for IoT edge devices
+
+Cross-compiled for ARM architecture
+
+Components deployed:
+
+- controls-bridge
+- batch-telemetry-uploader
+- makeline-ui
+- orderitem-uploader
+- All Rust control system binaries
+
+## Greengrass Deployment
+
+On release published or push to release/** branches:
+
+Compile Rust binaries for ARM
+
+Deploy to AWS IoT Greengrass
+
+Targets dev, staging, and prod environments
+
+Version stamped from package.json
+
 ## CI Integration
 
 Publishing with `release/**` branch triggers:
 
-- Existing CI workflows
-- Artifact uploading
+- Firmware artifact build and upload
+- Greengrass component compilation
 - Greengrass component deployment
+- Artifact uploading to GitHub release
 
 Everything continues to work!
 
@@ -282,11 +336,13 @@ New: Single unified version
 
 Old: release-please manages everything
 
-New: Manual control via makeline-release tool
+New: Explicit control via makeline-release tool
 
-Old: Conventional commits only
+Old: release-please for changelog
 
-New: git-cliff + conventional commits
+New: git-cliff for changelog
+
+Both: Conventional commits required
 
 ## New Approach Benefits
 
