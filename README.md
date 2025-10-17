@@ -119,19 +119,25 @@ Unified versioning across the entire suite
 
 All workspaces share the same version number
 
-No more independent versions
+Version synced across all Cargo.toml files and package.json
 
-## New Unified Versioning
+## Key Principles
 
-Version strings are now synced across:
+Tags mark specific commits as releases on main
 
-- Package.json (repo root)
-- Controls workspace Cargo.toml
-- Firmware workspace Cargo.toml
-- Explorer workspace Cargo.toml
-- Cabinet-controller workspace Cargo.toml
+Release branches created from tagged commits
 
-## New Release Process
+Clear traceability: tag → commit → release
+
+Explicit control over version bumps
+
+## The makeline-release Tool
+
+Custom tool that handles releases reliably
+
+Just commands wrap each step for convenience
+
+## Release Process
 
 1. Bump all version strings uniformly
 2. Update the changelog
@@ -140,29 +146,13 @@ Version strings are now synced across:
 5. Create release branch (e.g., `release/hyphenx-v1.2.x`)
 6. Publish release to GitHub
 
-## Main Branch vs Releases
-
-Main branch contains latest development work
-
-Tags mark specific commits as releases
-
-Release branches created from tagged commits
-
-Clear traceability: tag → commit → release
-
-## New Hotfix Process
+## Hotfix Process
 
 To apply hotfixes to release branches:
 
 1. Cherry-pick the SHA of the commit
 2. Bump the patch version
 3. Publish release to GitHub
-
-## The makeline-release Tool
-
-Custom tool that handles releases reliably
-
-Just commands wrap each step for convenience
 
 ## Bump Version
 
@@ -226,7 +216,7 @@ Uses git-cliff for changelog generation
 
 No manual changelog editing required
 
-## Executable Hash Validation
+## Executable Validation
 
 Generate executables.json with SHA256 hashes
 
@@ -236,27 +226,18 @@ Hash all release binaries automatically
 
 Command: `just generate-hashes`
 
-## Explorer Validation Widget
+## Validation Widget
 
-File picker for executables.json
+Explorer has a Validation widget:
 
-Directory picker for binaries
+- File picker for executables.json
+- Directory picker for binaries
+- Validates each executable against manifest
+- Shows PASS/FAIL/MISSING/ERROR status
+- Table view with expected vs actual hashes
+- Color-coded results for quick scanning
 
-Validates each executable against manifest
-
-Shows PASS/FAIL/MISSING/ERROR status
-
-## Validation Results
-
-Table view with status per executable
-
-Displays expected vs actual hashes
-
-Color-coded results for quick scanning
-
-Ensures release integrity
-
-## Release Artifact Validation
+## Validation Workflow
 
 Build binaries from tagged commit
 
