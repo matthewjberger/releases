@@ -113,6 +113,14 @@ Separate workflows for main and release branches
 
 ## New Release Strategy
 
+Unified versioning across the entire suite
+
+All workspaces share the same version number
+
+No more independent versions
+
+## New Unified Versioning
+
 Version strings are now synced across:
 
 - Package.json (repo root)
@@ -121,7 +129,7 @@ Version strings are now synced across:
 - Explorer workspace Cargo.toml
 - Cabinet-controller workspace Cargo.toml
 
-## Release Process
+## New Release Process
 
 1. Bump all version strings uniformly
 2. Update the changelog
@@ -130,7 +138,17 @@ Version strings are now synced across:
 5. Create release branch (e.g., `release/hyphenx-v1.2.x`)
 6. Publish release to GitHub
 
-## Hotfix Process
+## Main Branch vs Releases
+
+Main branch contains latest development work
+
+Tags mark specific commits as releases
+
+Release branches created from tagged commits
+
+Clear traceability: tag → commit → release
+
+## New Hotfix Process
 
 To apply hotfixes to release branches:
 
@@ -206,6 +224,46 @@ Uses git-cliff for changelog generation
 
 No manual changelog editing required
 
+## Executable Hash Validation
+
+Generate executables.json with SHA256 hashes
+
+Includes suite version from workspace
+
+Hash all release binaries automatically
+
+Command: `just generate-hashes`
+
+## Explorer Validation Widget
+
+File picker for executables.json
+
+Directory picker for binaries
+
+Validates each executable against manifest
+
+Shows PASS/FAIL/MISSING/ERROR status
+
+## Validation Results
+
+Table view with status per executable
+
+Displays expected vs actual hashes
+
+Color-coded results for quick scanning
+
+Ensures release integrity
+
+## Release Artifact Validation
+
+Build binaries from tagged commit
+
+Generate executables.json with hashes
+
+Use explorer widget to validate
+
+Confirms binaries match the release
+
 ## CI Integration
 
 Publishing with `release/**` branch triggers:
@@ -216,23 +274,33 @@ Publishing with `release/**` branch triggers:
 
 Everything continues to work!
 
-## Benefits
+## Key Differences
 
-- Uniform semantic versioning
+Old: Independent versions per workspace
+
+New: Single unified version
+
+Old: release-please manages everything
+
+New: Manual control via makeline-release tool
+
+Old: Conventional commits only
+
+New: git-cliff + conventional commits
+
+## New Approach Benefits
+
+Preserves current benefits:
+
+- Automated changelog generation
+- Conventional commit based
+- Separate main/release workflows
+
+Adds new capabilities:
+
+- Unified semantic versioning
+- Explicit version control
+- Improved hotfix workflow
 - Tags on main branch commits
-- Release branches from tagged commits
-- Hotfix capability
-- Automated changelog management
-
-## Replaces release-please
-
-This entirely replaces the old release-please workflow
-
-## Why This Approach?
-
-- Unified version for software suite
-- Better control over release process
-- Simpler hotfix management
-- Clearer release history
 
 ## Questions?
