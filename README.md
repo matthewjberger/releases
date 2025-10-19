@@ -23,69 +23,32 @@ Unified versioning and release management
 
 ## Current Release Strategy
 
-Uses release-please for automated releases
+Automated with release-please
 
-Triggered on every push to main
+Main branch workflow:
+1. Push to main triggers release-please
+2. Analyzes conventional commits
+3. Opens/updates release PR
+4. Merging PR creates prerelease (e.g., 1.25.0-beta)
+5. Triggers creation of `release/X.Y.x` branch
+6. Branch bumped to stable version (X.Y.0)
 
-Creates release PRs automatically
+Hotfix workflow:
+- Push to release/** branches
+- release-please auto-bumps patch version
+- Creates release PRs on release branches
 
-## Current Versioning
+## Current Versioning & Changelog
 
-Version managed in package.json
+Version managed in package.json with `-beta` suffix
 
-Controls, firmware, and explorer have independent versions
+Independent versions:
+- Package.json: 1.25.0-beta
+- Controls: workspace shared version
+- Firmware: 0.1.0
+- Explorer: 1.0.0
 
-Main branch releases use `-beta` suffix
-
-Example: `1.25.0-beta`
-
-## Current Release Process
-
-1. Developers merge PRs to main
-2. release-please analyzes commits
-3. Opens/updates a release PR
-4. Merge release PR to create release
-5. Release creation triggers branch workflow
-6. Creates `release/X.Y.x` branch
-
-## Current Branch Creation
-
-When a prerelease is published:
-
-- Extracts major.minor from version
-- Creates branch `release/X.Y.x`
-- Commits with `Release-As: X.Y.0`
-- Bumps to stable version on branch
-
-## Current Changelog
-
-Automatically generated from conventional commits
-
-Groups by commit type (feat, fix, etc.)
-
-Links to commits and Pull Requests
-
-Updated with each release PR
-
-## Current Hotfix Workflow
-
-Automated via release-please
-
-Runs on push to release/** branches
-
-Always bumps patch version on release branches
-
-Creates release PRs on release branches
-
-## Current Release Branch Behavior
-
-Separate release-please configuration
-
-Uses always-bump-patch versioning
-
-No manual version control needed
-
-Relies on conventional commits
+Changelog generated from conventional commits by release-please
 
 ## Current Challenges
 
