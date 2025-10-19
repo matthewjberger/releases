@@ -21,52 +21,54 @@ _class:
 
 Unified versioning and release management
 
-## Current Release Strategy
+<!--
+Talking about our new release strategy. Moving from release-please to a more explicit approach with unified versioning. Let's start with how things work now.
+-->
 
-Automated with release-please
+## Current: Main Branch
 
-Main branch workflow:
-1. Push to main triggers release-please
-2. Analyzes conventional commits
-3. Opens/updates release PR
-4. Merging PR creates prerelease (e.g., 1.25.0-beta)
-5. Triggers creation of `release/X.Y.x` branch
-6. Branch bumped to stable version (X.Y.0)
+- Developer merges PR to main with conventional commits
+- release-please analyzes commits since last release
+- Determines version bump: `feat:` → minor, `fix:` → patch, `BREAKING CHANGE:` → major
+- Opens/updates release PR (updates CHANGELOG.md and package.json)
+- Merge creates prerelease tagged `v1.25.0-beta`
+- Triggers `release/X.Y.x` branch creation
+- Empty commit with `Release-As: X.Y.0` removes `-beta` suffix
 
-Hotfix workflow:
-- Push to release/** branches
-- release-please auto-bumps patch version
-- Creates release PRs on release branches
+<!--
+Devs use conventional commits - feat, fix, chore, etc. release-please scans commits since last release and figures out the bump. Opens a PR updating changelog and package.json. Merge that PR and it creates a prerelease with -beta, like v1.25.0-beta. Triggers a workflow to create the release branch. Empty commit with Release-As strips the -beta and makes it stable.
+-->
 
-## Current Versioning & Changelog
+## Current: Hotfix Workflow
 
-Version managed in package.json with `-beta` suffix
+- Push to `release/**` branch
+- release-please auto-bumps patch
+- Creates release PR
+- Merge creates stable release
 
-Independent versions:
-- Package.json: 1.25.0-beta
-- Controls: workspace shared version
-- Firmware: 0.1.0
-- Explorer: 1.0.0
-
-Changelog generated from conventional commits by release-please
+<!--
+For hotfixes, push to release branches and release-please auto-bumps patch. Automation's been helpful but has limitations we'll get into.
+-->
 
 ## Current Challenges
 
-Independent versioning per workspace creates confusion
+Independent versioning per workspace
 
 Package.json: 1.25.0-beta
 
-Controls: workspace shared version
+Controls apps: 0.1.0
 
 Firmware: 0.1.0
 
 Explorer: 1.0.0
 
-Difficult to track which components work together
+No single version number represents the suite of software
+
+<!--
+Main issue is compatibility tracking. Someone asks "what firmware works with explorer 1.0.0?" - can't give a straight answer because each workspace versions independently. Need a single version representing the whole system state.
+-->
 
 ## Benefits Worth Preserving
-
-From current approach:
 
 Automated release process
 
@@ -76,93 +78,148 @@ Changelog generation included
 
 Separate workflows for main and release branches
 
-## New Release Strategy
+<!--
+Current setup has things worth keeping. Automated changelogs and version updates save time. Conventional commits keep things consistent. Main and release branch workflows make sense. Want to preserve these while fixing the versioning issue.
+-->
 
-Unified versioning across the entire suite
+## New Strategy: Unified Versioning
 
-All workspaces share the same version number
+All version strings synced:
+- package.json at repo root
+- controls workspace Cargo.toml
+- firmware workspace Cargo.toml
+- explorer workspace Cargo.toml
+- cabinet-controller Cargo.toml
 
-Version synced across all Cargo.toml files and package.json
-
-## Key Principles
-
-Tags mark specific commits as releases on main
-
-Release branches created from tagged commits
-
-Clear traceability: tag → commit → release
-
-Explicit control over version bumps
-
-## The makeline-release Tool
-
-Custom tool that handles releases reliably
-
-Just commands wrap each step for convenience
+<!--
+Simple: one version for everything. All 5 locations stay synced. Say "version 1.26.0" and you know exactly what you're getting across all components.
+-->
 
 ## Release Process
 
-1. Bump all version strings uniformly
-2. Update the changelog
-3. Commit changes
-4. Tag that commit (e.g., `v1.2.0`)
-5. Create release branch (e.g., `release/hyphenx-v1.2.x`)
-6. Publish release to GitHub
+When we want to make a release:
+
+- Bump all version strings uniformly, update changelog, commit on main
+- Create release branch - tags commit on main (e.g., `v1.26.0`) and creates branch `release/1.26.x`
+- Switch to release branch and publish - creates GitHub release from the tag
+
+<!--
+Three steps. Bump all versions on main and commit. Create release branch - tags that commit with v1.26.0 and makes the branch from it. Switch to release branch and publish, which creates the GitHub release using that tag.
+-->
 
 ## Hotfix Process
 
 To apply hotfixes to release branches:
 
-1. Cherry-pick the SHA of the commit
-2. Bump the patch version
-3. Publish release to GitHub
+- Cherry-pick the SHA of the commit and bump the patch version
+- Publish creates new tag on release branch (e.g., `v1.26.1`) and GitHub release
 
-## Bump Version
+<!--
+Two steps for hotfixes. Cherry-pick the commit and bump patch. Publish creates a new tag on the release branch plus the GitHub release.
+-->
+
+## What We Get
+
+- Uniform semantic versioning
+- Tags on main branch commits
+- Release branches made from those tagged commits
+- Ability to add hotfixes to release branches and publish new releases including them
+
+<!--
+End result: unified versioning everywhere, tags on main marking release points, release branches from those tags, clean hotfix workflow.
+-->
+
+## The makeline-release Tool
+
+Custom tool called makeline-release handles the release workflow
+
+Just commands wrap each step
+
+Replaces release-please
+
+<!--
+Built makeline-release to handle version bumps, tagging, and branch creation. Wrapped in Just commands for convenience. Replaces release-please.
+-->
+
+## Commands: Version Bumps
 
 ```bash
 # Update version in all 5 places
-# And update CHANGELOG.md
-
-just bump-minor-version  # 1.25.0 → 1.26.0
-just bump-major-version  # 1.25.0 → 2.0.0
+# And update CHANGELOG.md at repo root
+just bump-minor-version          # 1.25.0 → 1.26.0
+just bump-major-version          # 1.25.0 → 2.0.0
 ```
 
-## Create Release Branch
+CHANGELOG.md automatically updated during bump step
+
+Run on main only - release branches only get patch bumps via hotfix
+
+<!--
+One command updates all 5 version files and regenerates the changelog. Everything stays synced. Minor and major bumps only happen on main. Release branches only get patch bumps through the hotfix workflow.
+-->
+
+## Commands: Create Release Branch
 
 ```bash
-# Tag current commit on main
-# Create/switch to release branch
+# Tag current commit and create release branch
+just create-release-branch       # Tag: v1.26.0, Branch: release/1.26.x
 
-just create-release-branch       # release/1.26.x
-
-# Or with a specific suffix
-just create-release-branch beta  # release/1.26.x-beta
+# Or with suffix (for variants/pre-releases)
+just create-release-branch beta  # Tag: v1.26.0-beta, Branch: release/1.26.x-beta
 ```
 
-## Publish Release
+<!--
+Tags current commit on main, creates release branch from that tag, and switches you to that branch. Tag on main marks the release branch creation point. Suffix goes in both tag and branch names. Can create multiple release branches from same commit with different suffixes - each gets its own tag.
+-->
+
+## How Tagging Works
+
+On main at commit `abc123` with version `1.26.0`:
+
+- Creates tag `v1.26.0` pointing to `abc123` on main
+- Creates branch `release/1.26.x` from `abc123`
+- Tag on main and first commit on release branch are the same
+
+Tag marks the point in main's history where the release was cut
+
+<!--
+When you create a release branch, you're on main at some commit with the version already bumped to 1.26.0. The command creates a tag pointing to that commit on main, then creates the release branch starting from that same commit. So the tag on main and the first commit of the release branch are identical. The tag stays on main marking where in main's history this release came from. Later when hotfixes get applied to the release branch, they diverge, but the tag on main still points to the original release point.
+-->
+
+## Commands: Publish Release
 
 ```bash
-# Publish the release to GitHub
-
-just publish-release  # Creates hyphenx-v1.26.x
+# You're already on the release branch after create-release-branch
+# Initial release uses existing tag from main
+just publish-release             # GitHub release v1.26.0
 ```
 
-## Apply Hotfixes
+Development continues on main
+
+<!--
+After creating release branch you're already on it, so just run publish. For initial release, uses the tag created on main - no new tag. For hotfixes, creates a new tag on the release branch. Tags on main mark where release branches were created. Tags on release branches mark hotfix releases. Main keeps moving forward independently.
+-->
+
+## Commands: Hotfixes
 
 ```bash
-# Find commits to backport
+# On release branch: find commits to backport
 git log main --oneline
 
-# Apply hotfix (bumps patch version)
+# Apply hotfix - cherry-picks and bumps patch version
 just hotfix <sha>
 
-# Publish updated release
-just publish-release
+# Publish release with hotfixes - creates new tag on release branch
+just publish-release             # Tag: v1.26.1, GitHub release created
 ```
 
-## Dry Run Mode
+<!--
+From release branch, find the commit SHA on main to backport. Run just hotfix - cherry-picks and bumps patch automatically. Then publish creates new tag on release branch and GitHub release.
+-->
 
-All commands support dry run:
+## Commands: Dry Run Mode
+
+You can append -dry to any command:
 
 ```bash
 just bump-minor-version-dry
@@ -171,136 +228,60 @@ just create-release-branch-dry
 just publish-release-dry
 ```
 
-## Changelog Management
+<!--
+All commands support dry run. See what'll happen before committing to changes.
+-->
 
-CHANGELOG.md is automatically updated during version bump
+## Release Validation
 
-Uses git-cliff for changelog generation
+- Explorer displays unified version
+- Validation widget verifies deployed binaries
+- `just generate-hashes` creates executables.json
 
-No manual changelog editing required
+```json
+{
+  "version": "1.25.0",
+  "executables": {
+    "api": "0b4e6bf10c7a63ac...",
+    "lifecycler_server": "b52551483b0dd6e1...",
+    ...
+  }
+}
+```
 
-## Executable Validation
-
-Generate executables.json with SHA256 hashes
-
-Includes suite version from workspace
-
-Hash all release binaries automatically
-
-Command: `just generate-hashes`
-
-## Validation Widget
-
-Explorer has a Validation widget:
-
-- File picker for executables.json
-- Directory picker for binaries
-- Validates each executable against manifest
-- Shows PASS/FAIL/MISSING/ERROR status
-- Table view with expected vs actual hashes
-- Color-coded results for quick scanning
-
-## Validation Workflow
-
-Build binaries from tagged commit
-
-Generate executables.json with hashes
-
-Use explorer widget to validate
-
-Confirms binaries match the release
-
-## Firmware Artifacts
-
-Embedded firmware for lift/cabinet screens
-
-Built for RP2040 microcontroller
-
-Multiple artifacts generated:
-
-- firmware.hex, firmware.uf2
-- stage3.hex, stage3.uf2 (bootloader)
-- stage4.hex, stage4.uf2 (bootloader)
-- merged.hex (combined)
-
-## Firmware Upload to Release
-
-On release published:
-
-Build embedded firmware artifacts
-
-Upload to GitHub Actions artifacts
-
-Attach all .hex and .uf2 files to release
-
-Available for download with release
-
-## Greengrass Components
-
-Rust binaries for IoT edge devices
-
-Cross-compiled for ARM architecture
-
-Components deployed:
-
-- controls-bridge
-- batch-telemetry-uploader
-- makeline-ui
-- orderitem-uploader
-- All Rust control system binaries
-
-## Greengrass Deployment
-
-On release published or push to release/** branches:
-
-Compile Rust binaries for ARM
-
-Deploy to AWS IoT Greengrass
-
-Targets dev, staging, and prod environments
-
-Version stamped from package.json
+<!--
+Explorer displays the unified version it was built with and the current system version after connecting to a device. The validation widget verifies release integrity using executables.json - a manifest created by running just generate-hashes that maps executable names to their SHA256 hashes. Explorer uses this to verify release artifacts match what was actually built.
+-->
 
 ## CI Integration
 
-Publishing with `release/**` branch triggers:
+Publishing with `release/**` branch name still triggers existing workflows:
 
 - Firmware artifact build and upload
 - Greengrass component compilation
 - Greengrass component deployment
 - Artifact uploading to GitHub release
 
-Everything continues to work!
+<!--
+Publishing from a release branch triggers existing CI - firmware artifacts, Greengrass component builds and deployments, artifact uploads. Nothing changes on the CI side.
+-->
 
-## Key Differences
+## Benefits
 
-Old: Independent versions per workspace
+- Clear compatibility - single version tells you what works together
+- Automated changelogs and version updates
+- Development decoupled from releases (no release PRs)
+- Explicit control over when to release
+- Support for release variants (beta, hardware-specific, etc.)
+- Release validation via hash verification
+- Tags on main mark branch points, releases published from release branches
 
-New: Single unified version
-
-Old: release-please manages everything
-
-New: Explicit control via makeline-release tool
-
-Old: release-please for changelog
-
-New: git-cliff for changelog
-
-Both: Conventional commits required
-
-## New Approach Benefits
-
-Preserves current benefits:
-
-- Automated changelog generation
-- Conventional commit based
-- Separate main/release workflows
-
-Adds new capabilities:
-
-- Unified semantic versioning
-- Explicit version control
-- Improved hotfix workflow
-- Tags on main branch commits
+<!--
+Key benefits: compatibility clarity through unified versioning, automated changelogs and version updates, no release PRs at all, explicit release timing, support for variants with suffixes, hash-based validation, tags on main mark where release branches start and all actual releases get published from release branches. Automation where useful, control where needed.
+-->
 
 ## Questions?
+
+<!--
+That's the new release strategy. Questions?
+-->
